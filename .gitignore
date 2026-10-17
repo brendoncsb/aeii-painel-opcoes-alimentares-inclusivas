@@ -1,0 +1,29 @@
+# Segredos e ambiente local
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Dados brutos e bancos locais
+# O RAW da API não é versionado; a coleta pode ser reproduzida com src/coleta.py
+data/raw/
+data/database/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Backups e temporários
+*_backup_*
+*.tmp
+~$*
+
+# Sistema/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
