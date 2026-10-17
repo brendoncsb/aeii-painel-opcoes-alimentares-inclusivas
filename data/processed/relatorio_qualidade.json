@@ -1,0 +1,56 @@
+{
+  "arquivo_raw": "google_places_raw_20260913_143224.json",
+  "fonte": "Google Places API (New)",
+  "inicio_coleta": "2026-09-13T17:31:36.733843+00:00",
+  "fim_coleta": "2026-09-13T17:32:24.036799+00:00",
+  "consultas_planejadas": 8,
+  "consultas_concluidas": 8,
+  "consultas_com_erro": 0,
+  "registros_brutos": 364,
+  "place_ids_unicos_no_raw": 202,
+  "ocorrencias_repetidas_por_place_id": 162,
+  "registros_brutos_dentro_escopo": 359,
+  "estabelecimentos_unicos_dentro_escopo": 200,
+  "registros_brutos_fora_escopo": 5,
+  "estabelecimentos_unicos_fora_escopo": 2,
+  "cidades_fora_escopo": {
+    "Pinhais": 4,
+    "Campo Largo": 1
+  },
+  "estabelecimentos_por_cidade": {
+    "Curitiba": 140,
+    "São José dos Pinhais": 60
+  },
+  "relacionamentos_categoria": 314,
+  "relacionamentos_por_categoria": {
+    "Sem lactose": 115,
+    "Vegano": 79,
+    "Vegetariano": 60,
+    "Sem glúten": 60
+  },
+  "quantidade_de_categorias_por_estabelecimento": {
+    "1": 113,
+    "2": 65,
+    "3": 17,
+    "4": 5
+  },
+  "campos_ausentes_estabelecimentos": {
+    "place_id": 0,
+    "nome": 0,
+    "endereco_completo": 0,
+    "cidade": 0,
+    "latitude": 0,
+    "longitude": 0,
+    "nota_media": 0,
+    "total_avaliacoes": 0,
+    "nivel_preco": 49
+  },
+  "validacoes": {
+    "notas_fora_de_0_a_5": 0,
+    "avaliacoes_negativas": 0,
+    "latitudes_invalidas": 0,
+    "longitudes_invalidas": 0
+  },
+  "avisos": [],
+  "observacao_categoria": "As categorias representam os termos de busca nos quais cada estabelecimento apareceu. Não devem ser interpretadas isoladamente como certificação de que o estabelecimento atende integralmente à característica alimentar."
+}
