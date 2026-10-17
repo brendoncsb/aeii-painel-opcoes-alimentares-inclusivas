@@ -697,7 +697,8 @@ def gerar_relatorio_qualidade(
     )
 
     place_ids_unicos_escopo = int(
-        ocorrencias_escopo[            "place_id"
+        ocorrencias_escopo[
+            "place_id"
         ].nunique(dropna=True)
     )
 

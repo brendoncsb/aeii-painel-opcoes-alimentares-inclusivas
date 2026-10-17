@@ -27,3 +27,7 @@ A combinação das respostas “Sim” e “Talvez” indica **83,3% de aceitaç
 ## Limitações da validação
 
 A validação possui caráter exploratório, com amostra pequena, e não pretende produzir inferência estatística sobre toda a população. Os testes registrados nesta etapa foram realizados em computador, portanto os resultados não devem ser interpretados como validação específica da experiência mobile.
+
+## Evidência
+
+![Validação no Pipefy](screenshots/validacao_comunidade_pipefy.png)

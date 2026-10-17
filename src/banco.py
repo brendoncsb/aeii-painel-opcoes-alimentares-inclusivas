@@ -697,6 +697,7 @@ def criar_banco(
                 PASTA_DATABASE
                 / f"base_extensao_aeii_backup_{timestamp}.db"
             )
+
             shutil.copy2(
                 ARQUIVO_BANCO,
                 backup,
