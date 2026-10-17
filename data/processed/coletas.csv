@@ -1,0 +1,9 @@
+id_coleta,municipio_busca,categoria_busca,termo_busca,quantidade_registros_brutos
+1,Curitiba,Vegetariano,restaurantes vegetarianos em Curitiba PR,46
+2,Curitiba,Vegano,restaurantes veganos em Curitiba PR,60
+3,Curitiba,Sem glúten,restaurantes sem glúten em Curitiba PR,58
+4,Curitiba,Sem lactose,restaurantes sem lactose em Curitiba PR,60
+5,São José dos Pinhais,Vegetariano,restaurantes vegetarianos em São José dos Pinhais PR,32
+6,São José dos Pinhais,Vegano,restaurantes veganos em São José dos Pinhais PR,39
+7,São José dos Pinhais,Sem glúten,restaurantes sem glúten em São José dos Pinhais PR,9
+8,São José dos Pinhais,Sem lactose,restaurantes sem lactose em São José dos Pinhais PR,60
