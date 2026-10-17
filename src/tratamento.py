@@ -697,8 +697,7 @@ def gerar_relatorio_qualidade(
     )
 
     place_ids_unicos_escopo = int(
-        ocorrencias_escopo[
-            "place_id"
+        ocorrencias_escopo[            "place_id"
         ].nunique(dropna=True)
     )
 
@@ -998,3 +997,202 @@ def salvar_relatorio(
             ensure_ascii=False,
             indent=2,
         )
+
+
+# ============================================================
+# RESUMO NO TERMINAL
+# ============================================================
+
+def imprimir_resumo(
+    relatorio: dict[str, Any],
+) -> None:
+    """
+    Exibe as principais métricas no terminal.
+    """
+
+    print("\n" + "=" * 70)
+    print("TRATAMENTO E QUALIDADE — ATIVIDADE EXTENSIONISTA II")
+    print("=" * 70)
+
+    print(
+        "\nRegistros brutos: "
+        f"{relatorio['registros_brutos']}"
+    )
+
+    print(
+        "Place IDs únicos no RAW: "
+        f"{relatorio['place_ids_unicos_no_raw']}"
+    )
+
+    print(
+        "Ocorrências repetidas por place_id: "
+        f"{relatorio['ocorrencias_repetidas_por_place_id']}"
+    )
+
+    print(
+        "Registros fora do escopo territorial: "
+        f"{relatorio['registros_brutos_fora_escopo']}"
+    )
+
+    print(
+        "Estabelecimentos únicos no escopo: "
+        f"{relatorio['estabelecimentos_unicos_dentro_escopo']}"
+    )
+
+    print("\nEstabelecimentos por cidade:")
+
+    for cidade, quantidade in (
+        relatorio[
+            "estabelecimentos_por_cidade"
+        ].items()
+    ):
+        print(
+            f"  {cidade}: {quantidade}"
+        )
+
+    print("\nRelacionamentos por categoria de busca:")
+
+    for categoria, quantidade in (
+        relatorio[
+            "relacionamentos_por_categoria"
+        ].items()
+    ):
+        print(
+            f"  {categoria}: {quantidade}"
+        )
+
+    ausentes = relatorio[
+        "campos_ausentes_estabelecimentos"
+    ]
+
+    print("\nCampos ausentes nos estabelecimentos:")
+
+    for campo, quantidade in ausentes.items():
+        print(
+            f"  {campo}: {quantidade}"
+        )
+
+    print("\nArquivos gerados:")
+    print(f"  {ARQUIVO_ESTABELECIMENTOS}")
+    print(f"  {ARQUIVO_CATEGORIAS}")
+    print(f"  {ARQUIVO_RELACIONAMENTO}")
+    print(f"  {ARQUIVO_COLETAS}")
+    print(f"  {ARQUIVO_QUALIDADE}")
+    print(f"  {ARQUIVO_EXCEL}")
+
+    print("\n" + "=" * 70)
+    print("PROCESSO CONCLUÍDO COM SUCESSO")
+    print("=" * 70)
+
+
+# ============================================================
+# EXECUÇÃO PRINCIPAL
+# ============================================================
+
+def main() -> None:
+    """
+    Executa o tratamento completo.
+    """
+
+    try:
+        arquivo_raw = localizar_raw_mais_recente()
+
+        print(
+            "Arquivo RAW selecionado:\n"
+            f"{arquivo_raw}"
+        )
+
+        dados = carregar_json(
+            arquivo_raw
+        )
+
+        ocorrencias = montar_ocorrencias(
+            dados
+        )
+
+        ocorrencias = converter_tipos(
+            ocorrencias
+        )
+
+        avisos = validar_ocorrencias(
+            ocorrencias
+        )
+
+        ocorrencias_escopo, ocorrencias_fora = (
+            separar_escopo(
+                ocorrencias
+            )
+        )
+
+        estabelecimentos = criar_estabelecimentos(
+            ocorrencias_escopo
+        )
+
+        categorias = criar_categorias()
+
+        relacionamento = criar_relacionamento(
+            ocorrencias_escopo,
+            categorias,
+        )
+
+        coletas = criar_coletas(
+            dados
+        )
+
+        relatorio = gerar_relatorio_qualidade(
+            dados=dados,
+            ocorrencias=ocorrencias,
+            ocorrencias_escopo=ocorrencias_escopo,
+            ocorrencias_fora=ocorrencias_fora,
+            estabelecimentos=estabelecimentos,
+            relacionamento=relacionamento,
+            categorias=categorias,
+            avisos=avisos,
+            arquivo_raw=arquivo_raw,
+        )
+
+        exportar_csv(
+            estabelecimentos,
+            categorias,
+            relacionamento,
+            coletas,
+        )
+
+        exportar_excel(
+            estabelecimentos,
+            categorias,
+            relacionamento,
+            coletas,
+        )
+
+        salvar_relatorio(
+            relatorio
+        )
+
+        imprimir_resumo(
+            relatorio
+        )
+
+    except (
+        FileNotFoundError,
+        ValueError,
+    ) as erro:
+        print("\nERRO NO TRATAMENTO")
+        print(erro)
+
+    except PermissionError:
+        print(
+            "\nERRO DE PERMISSÃO.\n"
+            "Feche arquivos Excel/CSV abertos e "
+            "execute novamente."
+        )
+
+    except Exception as erro:
+        print("\nERRO INESPERADO")
+        print(
+            f"{type(erro).__name__}: {erro}"
+        )
+
+
+if __name__ == "__main__":
+    main()
