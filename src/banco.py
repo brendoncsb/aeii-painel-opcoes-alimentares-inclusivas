@@ -697,7 +697,6 @@ def criar_banco(
                 PASTA_DATABASE
                 / f"base_extensao_aeii_backup_{timestamp}.db"
             )
-
             shutil.copy2(
                 ARQUIVO_BANCO,
                 backup,
@@ -997,3 +996,275 @@ def imprimir_validacoes() -> None:
         fk = conexao.execute(
             "PRAGMA foreign_key_check;"
         ).fetchall()
+
+        print(
+            "  foreign_key_check: "
+            + (
+                "ok"
+                if not fk
+                else str(fk)
+            )
+        )
+
+
+# ============================================================
+# EXPORTAÇÕES DE CONSULTAS SQL
+# ============================================================
+
+def exportar_consultas_sql() -> None:
+    """
+    Exporta algumas visões derivadas do SQLite para comprovação
+    e eventual apoio à construção do painel.
+    """
+
+    PASTA_EXPORTACOES_SQL.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    with closing(
+        sqlite3.connect(
+            ARQUIVO_BANCO
+        )
+    ) as conexao:
+
+        consultas = {
+            "vw_estabelecimentos_categorias.csv": (
+                """
+                SELECT *
+                FROM vw_estabelecimentos_categorias
+                ORDER BY cidade, nome, categoria_busca;
+                """
+            ),
+            "vw_resumo_cidade.csv": (
+                """
+                SELECT *
+                FROM vw_resumo_cidade
+                ORDER BY cidade;
+                """
+            ),
+            "vw_resumo_categoria.csv": (
+                """
+                SELECT *
+                FROM vw_resumo_categoria
+                ORDER BY quantidade_estabelecimentos DESC;
+                """
+            ),
+            "vw_powerbi_estabelecimentos.csv": (
+                """
+                SELECT *
+                FROM vw_powerbi_estabelecimentos
+                ORDER BY cidade, nome;
+                """
+            ),
+        }
+
+        for nome_arquivo, sql in consultas.items():
+
+            df = pd.read_sql_query(
+                sql,
+                conexao,
+            )
+
+            df.to_csv(
+                PASTA_EXPORTACOES_SQL / nome_arquivo,
+                index=False,
+                encoding="utf-8-sig",
+            )
+
+
+# ============================================================
+# REGISTRO DA EXECUÇÃO
+# ============================================================
+
+def salvar_relatorio_banco() -> None:
+    """Salva metadados e contagens do banco em JSON."""
+
+    with closing(
+        sqlite3.connect(
+            ARQUIVO_BANCO
+        )
+    ) as conexao:
+
+        dados = {
+            "arquivo_banco": str(
+                ARQUIVO_BANCO
+            ),
+            "data_criacao_utc": datetime.now(
+                timezone.utc
+            ).isoformat(),
+            "integrity_check": consultar_escalar(
+                conexao,
+                "PRAGMA integrity_check;",
+            ),
+            "quantidades": {
+                "estabelecimentos": consultar_escalar(
+                    conexao,
+                    """
+                    SELECT COUNT(*)
+                    FROM estabelecimentos;
+                    """,
+                ),
+                "categorias_busca": consultar_escalar(
+                    conexao,
+                    """
+                    SELECT COUNT(*)
+                    FROM categorias_busca;
+                    """,
+                ),
+                "relacionamentos": consultar_escalar(
+                    conexao,
+                    """
+                    SELECT COUNT(*)
+                    FROM estabelecimento_categoria_busca;
+                    """,
+                ),
+                "coletas": consultar_escalar(
+                    conexao,
+                    """
+                    SELECT COUNT(*)
+                    FROM coletas;
+                    """,
+                ),
+            },
+            "cidades": {
+                linha[0]: linha[1]
+                for linha in conexao.execute(
+                    """
+                    SELECT
+                        cidade,
+                        COUNT(*)
+                    FROM estabelecimentos
+                    GROUP BY cidade;
+                    """
+                )
+            },
+            "categorias": {
+                linha[0]: linha[1]
+                for linha in conexao.execute(
+                    """
+                    SELECT
+                        c.categoria_busca,
+                        COUNT(DISTINCT ec.place_id)
+                    FROM categorias_busca AS c
+                    LEFT JOIN estabelecimento_categoria_busca AS ec
+                        ON ec.id_categoria = c.id_categoria
+                    GROUP BY
+                        c.id_categoria,
+                        c.categoria_busca;
+                    """
+                )
+            },
+        }
+
+    caminho = (
+        PASTA_DATABASE
+        / "relatorio_banco_sqlite.json"
+    )
+
+    with caminho.open(
+        "w",
+        encoding="utf-8",
+    ) as arquivo:
+        json.dump(
+            dados,
+            arquivo,
+            ensure_ascii=False,
+            indent=2,
+        )
+
+
+# ============================================================
+# EXECUÇÃO PRINCIPAL
+# ============================================================
+
+def main() -> None:
+    """Executa criação, validação e exportação do SQLite."""
+
+    print("=" * 70)
+    print("BANCO SQLITE — ATIVIDADE EXTENSIONISTA II")
+    print("=" * 70)
+
+    try:
+        (
+            estabelecimentos,
+            categorias,
+            relacionamento,
+            coletas,
+        ) = carregar_dados()
+
+        print("\nArquivos processados carregados:")
+        print(
+            f"  Estabelecimentos: {len(estabelecimentos)}"
+        )
+        print(
+            f"  Categorias: {len(categorias)}"
+        )
+        print(
+            f"  Relacionamentos: {len(relacionamento)}"
+        )
+        print(
+            f"  Coletas: {len(coletas)}"
+        )
+
+        criar_banco(
+            estabelecimentos=estabelecimentos,
+            categorias=categorias,
+            relacionamento=relacionamento,
+            coletas=coletas,
+        )
+
+        imprimir_validacoes()
+
+        exportar_consultas_sql()
+
+        salvar_relatorio_banco()
+
+        print("\n" + "=" * 70)
+        print("PROCESSO CONCLUÍDO COM SUCESSO")
+        print("=" * 70)
+
+        print(
+            "\nBanco criado em:\n"
+            f"{ARQUIVO_BANCO}"
+        )
+
+        print(
+            "\nExportações SQL em:\n"
+            f"{PASTA_EXPORTACOES_SQL}"
+        )
+
+        print(
+            "\nRelatório do banco em:\n"
+            f"{PASTA_DATABASE / 'relatorio_banco_sqlite.json'}"
+        )
+
+    except (
+        FileNotFoundError,
+        ValueError,
+        RuntimeError,
+        sqlite3.Error,
+    ) as erro:
+        print("\nERRO")
+        print(
+            f"{type(erro).__name__}: {erro}"
+        )
+
+    except PermissionError as erro:
+        print(
+            "\nERRO DE PERMISSÃO.\n"
+            "O arquivo final continua bloqueado pelo Windows/OneDrive.\n"
+            "Feche DB Browser/Power BI e pause temporariamente a "
+            "sincronização do OneDrive antes de tentar novamente.\n\n"
+            f"Detalhes: {erro}"
+        )
+
+    except Exception as erro:
+        print("\nERRO INESPERADO")
+        print(
+            f"{type(erro).__name__}: {erro}"
+        )
+
+
+if __name__ == "__main__":
+    main()
